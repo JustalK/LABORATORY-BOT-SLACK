@@ -1,5 +1,12 @@
 # SERVER-API-EMPTY
 
+1- Create an App
+https://api.slack.com/apps/new
+2 - Install package
+ npm install @slack/oauth
+ 
+
+
 [![Travis](https://img.shields.io/travis/com/justalk/server-api.svg?style=flat-square)](https://travis-ci.com/github/JustalK/server-api)
 [![Coverage Status](https://coveralls.io/repos/github/JustalK/SERVER-API/badge.svg?branch=master)](https://coveralls.io/github/JustalK/SERVER-API?branch=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/7e6edeed2150efaa35bd/maintainability)](https://codeclimate.com/github/JustalK/SERVER-API/maintainability)

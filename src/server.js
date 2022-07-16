@@ -15,6 +15,14 @@ const logger = require('@src/libs/logger')
 const crontab = require('@src/crontab/crontab')
 const auth = require('basic-auth')
 
+const eventsApi = require('@slack/events-api')
+const slackEvents = eventsApi.createEventAdapter(process.env.SIGNING_SECRET || '993adb4ac097aadcad8b304ab276d861')
+const { WebClient, LogLevel } = require('@slack/web-api')
+
+const client = new WebClient(process.env.BOT_TOKEN || 'xoxb-3230192996481-3802065341878-a23cOwV1W7sj3LlrkDCIMPE6', {
+  logLevel: LogLevel.DEBUG
+})
+
 module.exports = {
   /**
   * Create the restify server
@@ -108,7 +116,19 @@ module.exports = {
     module.exports.register_monitor(server)
     module.exports.register_helmet(server)
 
-    server.use('/', require('./routes/app'))
+    // server.use('/', require('./routes/app'))
+
+    server.use('/', slackEvents.expressMiddleware())
+    slackEvents.on('message', async (event) => {
+      if (!event.subtype && !event.bot_id) {
+        client.chat.postMessage({
+          client,
+          channel: event.channel,
+          thread_ts: event.ts,
+          text: 'Hello World!'
+        })
+      }
+    })
 
     return new Promise((resolve, reject) => {
       server.listen({ port: port, host: host }, (error) => module.exports.callback(error, resolve, reject))

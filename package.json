@@ -32,6 +32,9 @@
   "dependencies": {
     "@admin-bro/express": "^3.1.0",
     "@admin-bro/mongoose": "^1.1.0",
+    "@slack/events-api": "^3.0.1",
+    "@slack/oauth": "^2.5.4",
+    "@slack/web-api": "^6.7.2",
     "admin-bro": "^3.4.0",
     "apollo-server-express": "^2.20.0",
     "basic-auth": "^2.0.1",
