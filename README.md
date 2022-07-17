@@ -1,28 +1,8 @@
-# SERVER-API-EMPTY
+# LABORATORY-SERVER-SLACK
 
-1- Create an App
-https://api.slack.com/apps/new
-2 - Install package
- npm install @slack/oauth
- 
+This project is a small laboratory for testing how to create a bot for Slack. I described the whole process in the development section with multiple screen for showing what to do and where.
 
-
-[![Travis](https://img.shields.io/travis/com/justalk/server-api.svg?style=flat-square)](https://travis-ci.com/github/JustalK/server-api)
-[![Coverage Status](https://coveralls.io/repos/github/JustalK/SERVER-API/badge.svg?branch=master)](https://coveralls.io/github/JustalK/SERVER-API?branch=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/7e6edeed2150efaa35bd/maintainability)](https://codeclimate.com/github/JustalK/SERVER-API/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/7e6edeed2150efaa35bd/test_coverage)](https://codeclimate.com/github/JustalK/SERVER-API/test_coverage)
-
-This project is a fresh starter for creating a **REST API** with all my favorite tools.
-
-The server is using the library `Express` but it can be switch easily in the **server.js** file for Fastify or Restify. The server is linked to the library `Apollo-server` for managing the data with `GraphQL`. The database is handle by `MongoDB` and can also be easily switch in **database.js**.
-
-The models are found in the folder **models**. Their schema are described with `mongoose` and also typed for using `GraphQL`.
-
-The continuous integration is handled with `Travis` and the coverage is checked by `Coveralls` and `Codeclimate` for checking the level of maintainability of the code. Finally, I use `Ava` for making the test cases. For fixing the style, I use `Eslint`.
-
-Before committing, `Husky` will force the tests to be run and will validate or not the new push.
-
-I also added `dotenv-encode` for encoding or decoding the env files.
+The example here is a minimal bot that will respond at every message. The goal was really to provide the minimim required for having a functionning bot as fast as possible. Feel free to modify it using the Slack api: https://api.slack.com/methods  
 
 ## Plan of the presentation
 
@@ -110,6 +90,93 @@ A html doc will be then found inside the directory **/doc/schema**.
 
 ## Development
 
+#### How the create a bot for Slack
+
+0- The first step is to have our server running through a ngrok.
+
+* Create an account on ngrok (https://ngrok.com/)
+* Install globally ngrok
+```bash
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
+```
+* Authentificate ngrok on our machine with the credential obtain with our registration
+```bash
+ngrok config add-authtoken <token>
+```
+* Start a tunnel on the open port (in our case 5000)
+```bash
+ngrok http 5000
+```
+
+1- We need to create and configure our app on Slack.
+Go on the following link: https://api.slack.com/apps/
+
+Add click, on the menu `Create New App`
+
+![Alt text](documentation/pictures/1.png?raw=true "SLACK")
+
+On the following screen, choose the `from scratch` option and choose a name for your app and in which Slack you want to install it.
+
+2- We need to choose the permission for our app. In the menu `OAuth & Permission` under `Features`, we will scroll down until we reach the section `Scope`.
+
+![Alt text](documentation/pictures/2.png?raw=true "SLACK")
+
+Click on the button `Add an OAuth Scope` and choose the following permissions:
+* channels:history
+* channels:read
+* channels:write
+
+3. It is start to code and to create our endpoint watching for event from slack.
+We create a file `slack.js` inside the `routes` folder containing the connection:
+
+```js
+const eventsApi = require('@slack/events-api')
+const slackEvents = eventsApi.createEventAdapter(process.env.SIGNING_SECRET)
+const { WebClient, LogLevel } = require('@slack/web-api')
+
+const client = new WebClient(process.env.BOT_TOKEN, {
+  logLevel: LogLevel.DEBUG
+})
+
+slackEvents.on('message', async (event) => {
+  if (!event.subtype && !event.bot_id) {
+    return client.chat.postMessage({
+      channel: event.channel,
+      text: 'Hello World!'
+    })
+  }
+})
+
+module.exports = slackEvents.expressMiddleware()
+```
+
+We add this file in our `server.js` file as follow:
+```
+server.use('/slack', require('./routes/slack'))
+```
+
+The two keys from the environment files can be found on the Slack website in the `Basic information` menu under `Settings`. If you scroll down, you should find everything needed in the section `App Credentials`.
+
+![Alt text](documentation/pictures/4.png?raw=true "SLACK")
+
+4- Since we will be using the event of slack, we need to configure the event subscription. In the menu `Event Subscription` under `Features`, click on the toggle on the top right side for activating the feature.
+
+![Alt text](documentation/pictures/3.png?raw=true "SLACK")
+
+Now, we need to verify the url. Fill up the request url with the url obtain from ngrok and add the path `/slack` at the end. If everything goes well, you should received the verified confirmation.
+
+In the same panel, in the section below `Subscribe to bot events`, we click on the button `Add Bot User Event`. Since we will be posting over a message, we need to check for the event `message:channels`.
+
+5- After that, we need to reinstall our app on Slakc. In the menu `Install App` under `Settings`, click on the button `reinstall app` to update the permission of your app.
+
+![Alt text](documentation/pictures/6.png?raw=true "SLACK")
+
+6- In your Slack, create a channel and once inside, click on the little arrow beside the name of the channel. In the popup opening, click on `Integration` and add your app.
+
+![Alt text](documentation/pictures/5.png?raw=true "SLACK")
+
+7- Now, if everything has been done correctly, you should be able to receive a message from your bot after writting a message.
+
 #### Package explanation
 
 * **@admin-bro/express**: A middleware for connecting express with admin-bro. I use it for creating the route of the admin bro.
@@ -149,7 +216,8 @@ A html doc will be then found inside the directory **/doc/schema**.
 * **mongo-seeding**: The ultimate solution for populating your MongoDB database. I use it for populating the test database and also for populating the server at first installation.
 * **npx**: Executes <command> either from a local node_modules/.bin, or from a central cache, installing any packages needed in order for <command> to run. I use it for running package from my local node module directory such as esLint.
 * **nyc**: Istanbul's state of the art command line interface. I use it for creating the report for the coverall and making it available in the browser.
-* **dotenv-encode**: My own package for encoding or decoding the env file
+* **@slack/web-api**: For using the web api of Slack (https://api.slack.com/methods)
+* **@slack/events-api**: For accessing the event of Slack
 
 #### Environment variables
 
