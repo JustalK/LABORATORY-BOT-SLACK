@@ -1,4 +1,4 @@
-# LABORATORY-SERVER-SLACK
+# LABORATORY-BOT-SLACK
 
 This project is a small laboratory for testing how to create a bot for Slack. I described the whole process in the development section with multiple screen for showing what to do and where.
 
